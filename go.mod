@@ -15,4 +15,9 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 )
 
-require go.mongodb.org/mongo-driver v1.17.4
+require (
+	github.com/mmcloughlin/geohash v0.10.0
+	go.mongodb.org/mongo-driver v1.17.4
+)
+
+require github.com/rabbitmq/amqp091-go v1.10.0 // indirect
