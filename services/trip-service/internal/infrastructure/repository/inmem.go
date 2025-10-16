@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ride-sharing/services/trip-service/internal/domain"
 	"ride-sharing/shared/proto/driver"
+	pb "ride-sharing/shared/proto/trip"
 )
 
 type InMemRepository struct {
@@ -14,12 +15,33 @@ type InMemRepository struct {
 
 // GetTripByID implements domain.TripRepository.
 func (r *InMemRepository) GetTripByID(ctx context.Context, id string) (*domain.TripModel, error) {
-	panic("unimplemented")
+	trip, ok := r.trips[id]
+	if !ok {
+		return nil, nil
+	}
+
+	return trip, nil
 }
 
 // UpdateTrip implements domain.TripRepository.
 func (r *InMemRepository) UpdateTrip(ctx context.Context, tripID string, status string, driver *driver.Driver) error {
-	panic("unimplemented")
+	trip, ok := r.trips[tripID]
+
+	if !ok {
+		return fmt.Errorf("trip not found with ID: %s", tripID)
+	}
+
+	trip.Status = status
+
+	if driver != nil {
+		trip.Driver = &pb.TripDriver{
+			Id:             driver.Id,
+			Name:           driver.Name,
+			ProfilePicture: driver.ProfilePicture,
+		}
+	}
+
+	return nil
 }
 
 func NewInMemRepository() *InMemRepository {

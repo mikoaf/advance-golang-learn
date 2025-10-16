@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"ride-sharing/shared/contracts"
 	"ride-sharing/shared/messaging"
 
@@ -62,7 +63,10 @@ func (t *tripConsumer) handleFindAndNotifyDrivers(ctx context.Context, payload m
 		return nil
 	}
 
-	suitableDriverID := suitableIDs[0]
+	// Get a random index from the matching drivers
+	randomIndex := rand.Intn(len(suitableIDs))
+
+	suitableDriverID := suitableIDs[randomIndex]
 	marshalledEvent, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %v", err)
