@@ -38,6 +38,8 @@ func (t *tripConsumer) Listen() error {
 		}
 		log.Printf("driver receive message: %+v", payload)
 
+		log.Printf("===========msg.routingkey: %v", msg.RoutingKey)
+
 		switch msg.RoutingKey {
 		case contracts.TripEventCreated, contracts.TripEventDriverNotInterested:
 			return t.handleFindAndNotifyDrivers(ctx, payload)

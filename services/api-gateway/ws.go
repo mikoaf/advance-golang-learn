@@ -93,7 +93,6 @@ func handleDriversWebsocket(w http.ResponseWriter, r *http.Request, rb *messagin
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer driverService.Close()
 
 	// Closing connections
 	defer func() {
@@ -102,6 +101,7 @@ func handleDriversWebsocket(w http.ResponseWriter, r *http.Request, rb *messagin
 			DriverID:    userID,
 			PackageSlug: packageSlug,
 		})
+		driverService.Close()
 		log.Println("Driver unregistered: ", userID)
 	}()
 

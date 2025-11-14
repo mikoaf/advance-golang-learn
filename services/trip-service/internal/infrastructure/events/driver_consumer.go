@@ -39,6 +39,8 @@ func (t *driverConsumer) Listen() error {
 		}
 		log.Printf("driver response receive message: %+v", payload)
 
+		log.Printf("===========msg.routingkey: %v", msg.RoutingKey)
+
 		switch msg.RoutingKey {
 		case contracts.DriverCmdTripAccept:
 			if err := t.handleTripAccepted(ctx, payload.TripID, payload.Driver); err != nil {
@@ -50,6 +52,7 @@ func (t *driverConsumer) Listen() error {
 				log.Printf("failed to handle trip decline: %v", err)
 				return err
 			}
+			return nil
 		}
 
 		log.Printf("unknown trip event: %+v", payload)
@@ -134,7 +137,7 @@ func (t *driverConsumer) handleTripDeclined(ctx context.Context, tripID, riderID
 	}
 
 	if err := t.rabbitmq.PublishMessage(ctx, contracts.TripEventDriverNotInterested, contracts.AmqpMessage{
-		OwnerID: trip.UserID,
+		OwnerID: riderID,
 		Data:    marshaledPayload,
 	}); err != nil {
 		return err

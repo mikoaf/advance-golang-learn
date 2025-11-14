@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"ride-sharing/services/trip-service/internal/domain"
-	"ride-sharing/shared/proto/driver"
+	pbd "ride-sharing/shared/proto/driver"
 	pb "ride-sharing/shared/proto/trip"
 )
 
-type InMemRepository struct {
+type inMemRepository struct {
 	trips     map[string]*domain.TripModel
 	rideFares map[string]*domain.RideFareModel
 }
 
 // GetTripByID implements domain.TripRepository.
-func (r *InMemRepository) GetTripByID(ctx context.Context, id string) (*domain.TripModel, error) {
+func (r *inMemRepository) GetTripByID(ctx context.Context, id string) (*domain.TripModel, error) {
 	trip, ok := r.trips[id]
 	if !ok {
 		return nil, nil
@@ -24,7 +24,7 @@ func (r *InMemRepository) GetTripByID(ctx context.Context, id string) (*domain.T
 }
 
 // UpdateTrip implements domain.TripRepository.
-func (r *InMemRepository) UpdateTrip(ctx context.Context, tripID string, status string, driver *driver.Driver) error {
+func (r *inMemRepository) UpdateTrip(ctx context.Context, tripID string, status string, driver *pbd.Driver) error {
 	trip, ok := r.trips[tripID]
 
 	if !ok {
@@ -38,20 +38,21 @@ func (r *InMemRepository) UpdateTrip(ctx context.Context, tripID string, status 
 			Id:             driver.Id,
 			Name:           driver.Name,
 			ProfilePicture: driver.ProfilePicture,
+			CarPlate:       driver.CarPlate,
 		}
 	}
 
 	return nil
 }
 
-func NewInMemRepository() *InMemRepository {
-	return &InMemRepository{
+func NewInMemRepository() *inMemRepository {
+	return &inMemRepository{
 		trips:     make(map[string]*domain.TripModel),
 		rideFares: make(map[string]*domain.RideFareModel),
 	}
 }
 
-func (r *InMemRepository) GetRideFareByID(ctx context.Context, id string) (*domain.RideFareModel, error) {
+func (r *inMemRepository) GetRideFareByID(ctx context.Context, id string) (*domain.RideFareModel, error) {
 	fare, exist := r.rideFares[id]
 	if !exist {
 		return nil, fmt.Errorf("fare does not exist with ID: %s", id)
@@ -60,12 +61,12 @@ func (r *InMemRepository) GetRideFareByID(ctx context.Context, id string) (*doma
 	return fare, nil
 }
 
-func (r *InMemRepository) CreateTrip(ctx context.Context, trip *domain.TripModel) (*domain.TripModel, error) {
+func (r *inMemRepository) CreateTrip(ctx context.Context, trip *domain.TripModel) (*domain.TripModel, error) {
 	r.trips[trip.ID.Hex()] = trip
 	return trip, nil
 }
 
-func (r *InMemRepository) SaveRideFare(ctx context.Context, fare *domain.RideFareModel) error {
+func (r *inMemRepository) SaveRideFare(ctx context.Context, fare *domain.RideFareModel) error {
 	r.rideFares[fare.ID.Hex()] = fare
 	return nil
 }

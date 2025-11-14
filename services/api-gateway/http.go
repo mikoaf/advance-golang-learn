@@ -9,12 +9,18 @@ import (
 	"ride-sharing/shared/contracts"
 	"ride-sharing/shared/env"
 	"ride-sharing/shared/messaging"
+	"ride-sharing/shared/tracing"
 
 	"github.com/stripe/stripe-go/v81"
 	"github.com/stripe/stripe-go/v81/webhook"
 )
 
+var tracer = tracing.GetTracer("api-gateway")
+
 func handleTripPreview(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "handleTripPreview")
+	defer span.End()
+
 	var reqBody previewTripRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		http.Error(w, "failed to parse JSON data", http.StatusBadRequest)
@@ -36,7 +42,7 @@ func handleTripPreview(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tripService.Close()
 
-	tripPreview, err := tripService.Client.PreviewTrip(r.Context(), reqBody.toProto())
+	tripPreview, err := tripService.Client.PreviewTrip(ctx, reqBody.toProto())
 	if err != nil {
 		log.Printf("failed to preview a trip: %v", err)
 		http.Error(w, "failed to preview a trip", http.StatusInternalServerError)
@@ -51,6 +57,9 @@ func handleTripPreview(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTripStart(w http.ResponseWriter, r *http.Request) {
+	ctx, span := tracer.Start(r.Context(), "handleTripStart")
+	defer span.End()
+
 	var reqBody createTripRequest
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		http.Error(w, "failed to parse JSON data", http.StatusBadRequest)
@@ -58,10 +67,10 @@ func handleTripStart(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if reqBody.UserID == "" {
-		http.Error(w, "user ID is required", http.StatusBadRequest)
-		return
-	}
+	// if reqBody.UserID == "" {
+	// 	http.Error(w, "user ID is required", http.StatusBadRequest)
+	// 	return
+	// }
 
 	tripService, err := grpc_clients.NewTripServiceClient()
 	if err != nil {
@@ -69,7 +78,7 @@ func handleTripStart(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tripService.Close()
 
-	tripStart, err := tripService.Client.CreateTrip(r.Context(), reqBody.toProto())
+	tripStart, err := tripService.Client.CreateTrip(ctx, reqBody.toProto())
 	if err != nil {
 		log.Printf("failed to create a trip: %v", err)
 		http.Error(w, "failed to create a trip", http.StatusInternalServerError)
@@ -83,6 +92,9 @@ func handleTripStart(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStripeWebhook(w http.ResponseWriter, r *http.Request, rb *messaging.RabbitMQ) {
+	ctx, span := tracer.Start(r.Context(), "handleStripeWebhook")
+	defer span.End()
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "failed to read request body", http.StatusInternalServerError)
@@ -114,7 +126,7 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request, rb *messaging.R
 		err := json.Unmarshal(event.Data.Raw, &session)
 		if err != nil {
 			log.Printf("error parsing webhook JSON: %v", err)
-			http.Error(w, "failed to marshal payload", http.StatusInternalServerError)
+			http.Error(w, "failed to marshal payload", http.StatusBadRequest)
 			return
 		}
 
@@ -136,7 +148,7 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request, rb *messaging.R
 			Data:    payloadBytes,
 		}
 
-		if err := rb.PublishMessage(r.Context(), contracts.PaymentEventSuccess, message); err != nil {
+		if err := rb.PublishMessage(ctx, contracts.PaymentEventSuccess, message); err != nil {
 			log.Printf("error publishing payment event: %v", err)
 			http.Error(w, "failed to publishing payment event", http.StatusInternalServerError)
 			return

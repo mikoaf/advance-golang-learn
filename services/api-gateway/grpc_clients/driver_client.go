@@ -3,6 +3,7 @@ package grpc_clients
 import (
 	"os"
 	pb "ride-sharing/shared/proto/driver"
+	"ride-sharing/shared/tracing"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -10,7 +11,7 @@ import (
 
 type driverServiceClient struct {
 	Client pb.DriverServiceClient
-	Conn   *grpc.ClientConn
+	conn   *grpc.ClientConn
 }
 
 func NewDriverServiceClient() (*driverServiceClient, error) {
@@ -19,7 +20,12 @@ func NewDriverServiceClient() (*driverServiceClient, error) {
 		driverServiceURL = "driver-service:9092"
 	}
 
-	conn, err := grpc.NewClient(driverServiceURL, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	dialOption := append(
+		tracing.DialOptionsWithTracing(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+
+	conn, err := grpc.NewClient(driverServiceURL, dialOption...)
 	if err != nil {
 		return nil, err
 	}
@@ -28,13 +34,13 @@ func NewDriverServiceClient() (*driverServiceClient, error) {
 
 	return &driverServiceClient{
 		Client: client,
-		Conn:   conn,
+		conn:   conn,
 	}, nil
 }
 
 func (c *driverServiceClient) Close() {
-	if c.Conn != nil {
-		if err := c.Conn.Close(); err != nil {
+	if c.conn != nil {
+		if err := c.conn.Close(); err != nil {
 			return
 		}
 	}

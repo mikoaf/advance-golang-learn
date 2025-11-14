@@ -69,13 +69,13 @@ func (h *gRPCHandler) PreviewTrip(ctx context.Context, req *pb.PreviewTripReques
 		Longitude: destination.Longitude,
 	}
 
-	route, err := h.service.GetRoute(ctx, pickupCoord, destCoord)
+	userID := req.GetUserID()
+
+	route, err := h.service.GetRoute(ctx, pickupCoord, destCoord, true)
 	if err != nil {
 		log.Println(err)
 		return nil, status.Errorf(codes.Internal, "failed to get route: %v", err)
 	}
-
-	userID := req.GetUserID()
 
 	estimatedFares := h.service.EstimatePackagesPriceWithRoute(route)
 	fares, err := h.service.GenerateTripFares(ctx, estimatedFares, userID, route)

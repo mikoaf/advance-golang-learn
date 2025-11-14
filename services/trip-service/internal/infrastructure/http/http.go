@@ -47,7 +47,7 @@ func (s *HttpHandler) HandlePreview(w http.ResponseWriter, r *http.Request) {
 	// 	UserID: reqBody.UserID,
 	// }
 
-	t, err := s.Service.GetRoute(ctx, &reqBody.Pickup, &reqBody.Destination)
+	t, err := s.Service.GetRoute(ctx, &reqBody.Pickup, &reqBody.Destination, true)
 	if err != nil {
 		http.Error(w, "failed to create trip", http.StatusInternalServerError)
 		return

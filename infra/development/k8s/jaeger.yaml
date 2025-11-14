@@ -19,6 +19,13 @@ spec:
           ports:
             - containerPort: 16686 # UI
             - containerPort: 14268 # Collector HTTP
+          # resources:
+          #   limits:
+          #     cpu: "500m"
+          #     memory: "512Mi"
+          #   requests:https://github.com/SelfMadeEngineerCode/ride-sharing.git
+          #     cpu: "200m"
+          #     memory: "256Mi"
           env:
             - name: COLLECTOR_OTLP_ENABLED
               value: "true"
